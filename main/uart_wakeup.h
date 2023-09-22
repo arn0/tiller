@@ -1,0 +1,1 @@
+esp_err_t register_uart_wakeup(void);

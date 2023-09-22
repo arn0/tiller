@@ -13,6 +13,7 @@
 
 #include "wifi_station.h"
 #include "tcp_transport_client.h"
+#include "light_sleep.h"
 #include "../../secret.h"
 
 static const char *TAG = "main";
