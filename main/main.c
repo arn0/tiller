@@ -24,7 +24,10 @@ void app_main(void)
 		esp_log_level_set("*", ESP_LOG_WARN);
 		esp_log_level_set("main", ESP_LOG_WARN);
 		esp_log_level_set("wifi_station", ESP_LOG_INFO);
-		esp_log_level_set("tcp_transport_client", ESP_LOG_VERBOSE);
+		esp_log_level_set("tcp_transport_client", ESP_LOG_DEBUG);
+		esp_log_level_set("light_sleep", ESP_LOG_VERBOSE);
+		esp_log_level_set("timer_wakeup", ESP_LOG_VERBOSE);
+		esp_log_level_set("uart_wakeup", ESP_LOG_VERBOSE);
 
 		//Initialize NVS
 		esp_err_t ret = nvs_flash_init();
