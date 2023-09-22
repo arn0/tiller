@@ -12,6 +12,7 @@
 #include "lwip/sys.h"
 
 #include "wifi_station.h"
+#include "tcp_transport_client.h"
 #include "../../secret.h"
 
 static const char *TAG = "main";
@@ -21,7 +22,8 @@ void app_main(void)
 {
 		esp_log_level_set("*", ESP_LOG_WARN);
 		esp_log_level_set("main", ESP_LOG_WARN);
-		esp_log_level_set("wifi station", ESP_LOG_INFO);
+		esp_log_level_set("wifi_station", ESP_LOG_INFO);
+		esp_log_level_set("tcp_transport_client", ESP_LOG_VERBOSE);
 
 		//Initialize NVS
 		esp_err_t ret = nvs_flash_init();
@@ -39,6 +41,8 @@ void app_main(void)
 // need to make this indefinite, with sleep time.
 
 
+
+	xTaskCreate(tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL);
 
 
 }
