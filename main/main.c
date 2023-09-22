@@ -19,6 +19,10 @@ static const char *TAG = "main";
 
 void app_main(void)
 {
+    esp_log_level_set("*", ESP_LOG_WARN);
+    esp_log_level_set("main", ESP_LOG_WARN);
+    esp_log_level_set("wifi station", ESP_LOG_INFO);
+
     //Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
