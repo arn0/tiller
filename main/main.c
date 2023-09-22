@@ -33,4 +33,12 @@ void app_main(void)
 
 		ESP_LOGI(TAG, "Start wifi_init_station()");
 		wifi_init_station();
+
+// When WiFi gets disconnected, wifi_event_handler will initiate reconnect attempts
+// maxes out at ESP_MAXIMUM_RETRY.
+// need to make this indefinite, with sleep time.
+
+
+
+
 }
