@@ -163,16 +163,11 @@ void wifi_init_station(void)
 	/* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
 	 * happened. */
 
-	if (bits & WIFI_CONNECTED_BIT)
-	{
+	if (bits & WIFI_CONNECTED_BIT) {
 		ESP_LOGI(TAG, "connected to ap SSID:%s", SECRET_SSID);
-	}
-	else if (bits & WIFI_FAIL_BIT)
-	{
+	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
-	}
-	else
-	{
+	} else {
 		ESP_LOGE(TAG, "UNEXPECTED EVENT");
 	}
 }
