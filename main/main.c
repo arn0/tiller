@@ -94,7 +94,7 @@ void wifi_init_sta(void)
              * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
              * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
              */
-            .threshold.authmode = WIFI_AUTH_WPA2_WPA3_PSK,
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
             .sae_pwe_h2e = WPA3_SAE_PWE_HUNT_AND_PECK,
             .sae_h2e_identifier = "",
         },
@@ -119,7 +119,7 @@ void wifi_init_sta(void)
         ESP_LOGI(TAG, "connected to ap SSID:%s",
                  SECRET_SSID );
     } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGI(TAG, "Failed to connect to SSID:%s,",
+        ESP_LOGI(TAG, "Failed to connect to SSID:%s",
                  SECRET_SSID );
     } else {
         ESP_LOGE(TAG, "UNEXPECTED EVENT");
