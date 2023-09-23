@@ -1,3 +1,5 @@
+#define  LOG_LOCAL_LEVEL ESP_LOG_INFO
+
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -5,13 +7,13 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
-#define  LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include "esp_log.h"
 #include "nvs_flash.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "events.h"
 #include "wifi_station.h"
 #include "tcp_transport_client.h"
 #include "light_sleep.h"
@@ -50,24 +52,27 @@ EventBits_t bits;
 	light_sleep_prepare();
 
 	while( true ) {
-			/* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-	 * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+		/* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+		 * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
 
-		bits = xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT | SLEEP_WAKEUP_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
+		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT | SLEEP_WAKEUP_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
 
-		if (bits & WIFI_CONNECTED_BIT) {
-			ESP_LOGI(TAG, "connected to ap SSID:%s", SECRET_SSID);
-			xTaskCreate(tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL);
-		} else if (bits & WIFI_FAIL_BIT) {
+		if ( bits & WIFI_CONNECTED_BIT ) {
+			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
+			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
+		} else if ( bits & WIFI_FAIL_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
 
-			//xEventGroupSetBits(s_wifi_event_group, SLEEP_WAKEUP_BIT);
 
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
 		} else if ( bits & SLEEP_WAKEUP_BIT ) {
 				ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
 				esp_wifi_connect();
+		} else if( bits & TCP_CONNECTED_BIT ){
+			/* next step */
+		} else if( bits & TCP_FAILED_BIT ){
+			/* wait and start tcp task again */
 		} else {
 			ESP_LOGE(TAG, "UNEXPECTED EVENT");
 		}

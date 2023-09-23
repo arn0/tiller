@@ -18,6 +18,7 @@
 #include "esp_timer.h"
 
 #include "light_sleep.h"
+#include "events.h"
 #include "timer_wakeup.h"
 #include "uart_wakeup.h"
 
