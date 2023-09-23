@@ -17,6 +17,7 @@
 #include "esp_transport_tcp.h"
 #include "esp_transport_socks_proxy.h"
 
+#include "events.h"
 #include "../../secret.h"
 
 
@@ -31,7 +32,7 @@ void tcp_transport_client_task(void *pvParameters)
 
 	while (true) {
 		if (transport == NULL) {
-			ESP_LOGE(TAG, "Error occurred during esp_transport_proxy_init()");
+			ESP_LOGE(TAG, "Error occurred during esp_transport_tcp_init()");
 			break;
 		}
 		int err = esp_transport_connect(transport, SECRET_ADDR, SECRET_PORT, -1);
@@ -40,6 +41,7 @@ void tcp_transport_client_task(void *pvParameters)
 		break;
 		}
 		ESP_LOGI(TAG, "Successfully connected");
+		xEventGroupSetBits( s_wifi_event_group, TCP_CONNECTED_BIT );
 
 		while (true) {
 			int bytes_written = esp_transport_write(transport, payload, strlen(payload), 0);
@@ -65,6 +67,7 @@ void tcp_transport_client_task(void *pvParameters)
 		esp_transport_close(transport);
 	}
 	esp_transport_destroy(transport);
+	xEventGroupSetBits( s_wifi_event_group, TCP_FAILED_BIT );
 
 	vTaskDelete(NULL);
 }

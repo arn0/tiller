@@ -1,2 +1,2 @@
-idf_component_register(SRCS "tcp_transport_client.c" "wifi_station.c" "main.c"
+idf_component_register(SRCS "uart_wakeup.c" "timer_wakeup.c" "light_sleep.c" "tcp_transport_client.c" "wifi_station.c" "main.c"
                     INCLUDE_DIRS ".")
