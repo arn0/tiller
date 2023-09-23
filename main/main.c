@@ -55,7 +55,7 @@ void app_main(void)
 
 	while( true ) {
 		/* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-		 * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+		 * number of re-tries (WIFI_DISCONNECTED_BIT). The bits are set by event_handler() (see above) */
 
 		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_DISCONNECTED_BIT | SLEEP_WAKEUP_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
 
@@ -71,10 +71,11 @@ void app_main(void)
 		} else if ( bits & WIFI_DISCONNECTED_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
+			ESP_ERROR_CHECK( esp_wifi_stop() );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
 		} else if ( bits & SLEEP_WAKEUP_BIT ) {
 				ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
-				esp_wifi_connect();
+				ESP_ERROR_CHECK( esp_wifi_start ());
 		} else if( bits & TCP_CONNECTED_BIT ){
 			/* next step */
 		} else if( bits & TCP_FAILED_BIT ){
