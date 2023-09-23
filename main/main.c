@@ -47,12 +47,10 @@ void app_main(void)
 	ESP_LOGI(TAG, "Start wifi_init_station()");
 	wifi_init_station();
 
-// When WiFi gets disconnected, wifi_event_handler will initiate reconnect attempts
-// maxes out at ESP_MAXIMUM_RETRY.
-// need to make this indefinite, with sleep time.
+	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
 
 
-EventBits_t bits;
+	EventBits_t bits;
 	light_sleep_prepare();
 
 	while( true ) {
