@@ -9,7 +9,6 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
-#include "esp_netif_sntp.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -33,19 +32,16 @@ void app_main(void)
 	esp_log_level_set("timer_wakeup", ESP_LOG_VERBOSE);
 	esp_log_level_set("uart_wakeup", ESP_LOG_VERBOSE);
 
-	//Initialize NVS
-	esp_err_t ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-		ESP_ERROR_CHECK(nvs_flash_erase());
-		ret = nvs_flash_init();
-	}
-	ESP_ERROR_CHECK(ret);
+		//Initialize NVS
+		esp_err_t ret = nvs_flash_init();
+		if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+			ESP_ERROR_CHECK(nvs_flash_erase());
+			ret = nvs_flash_init();
+		}
+		ESP_ERROR_CHECK(ret);
 
 	ESP_LOGI(TAG, "Start wifi_init_station()");
 	wifi_init_station();
-
-	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
-
 
 	EventBits_t bits;
 	light_sleep_prepare();
@@ -58,7 +54,7 @@ void app_main(void)
 
 		if ( bits & WIFI_CONNECTED_BIT ) {
 			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
- 			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
+			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else if ( bits & WIFI_FAIL_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
