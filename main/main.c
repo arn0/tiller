@@ -57,7 +57,7 @@ void app_main(void)
 		/* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
 		 * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
 
-		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT | SLEEP_WAKEUP_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
+		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_DISCONNECTED_BIT | SLEEP_WAKEUP_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
 
 		if ( bits & WIFI_CONNECTED_BIT ) {
 			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
@@ -68,7 +68,7 @@ void app_main(void)
          	ESP_LOGE( TAG, "Failed to update system time within 10s timeout" );
  			}
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
-		} else if ( bits & WIFI_FAIL_BIT ) {
+		} else if ( bits & WIFI_DISCONNECTED_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
