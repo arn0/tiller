@@ -49,6 +49,7 @@ void app_main(void)
 
 	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
 
+	test_init();
 
 	EventBits_t bits;
 	light_sleep_prepare();
@@ -67,6 +68,8 @@ void app_main(void)
      		if ( esp_netif_sntp_sync_wait( pdMS_TO_TICKS( 10000 ) ) != ESP_OK ) {
          	ESP_LOGE( TAG, "Failed to update system time within 10s timeout" );
  			}
+ 			xTaskCreate( test_task_tx, "test_task_tx", 4096, NULL, 5, NULL );
+ 			xTaskCreate( test_task_rx, "test_task_rx", 4096, NULL, 5, NULL );
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else if ( bits & WIFI_DISCONNECTED_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
