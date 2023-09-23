@@ -55,9 +55,9 @@ void app_main(void)
 
 	while( true ) {
 		/* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
-		 * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+		 * number of re-tries (WIFI_DISCONNECTED_BIT). The bits are set by event_handler() (see above) */
 
-		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT | SLEEP_WAKEUP_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
+		bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_DISCONNECTED_BIT | TCP_CONNECTED_BIT | TCP_FAILED_BIT | SLEEP_WAKEUP_WIFI_BIT | SLEEP_WAKEUP_TCP_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
 
 		if ( bits & WIFI_CONNECTED_BIT ) {
 			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
@@ -68,17 +68,28 @@ void app_main(void)
          	ESP_LOGE( TAG, "Failed to update system time within 10s timeout" );
  			}
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
-		} else if ( bits & WIFI_FAIL_BIT ) {
+		} else if ( bits & WIFI_DISCONNECTED_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
+			/* Restore the cleared bit */
+			xEventGroupSetBits( s_wifi_event_group, WIFI_DISCONNECTED_BIT );
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
-		} else if ( bits & SLEEP_WAKEUP_BIT ) {
-				ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
-				esp_wifi_connect();
+		} else if ( bits & SLEEP_WAKEUP_WIFI_BIT ) {
+			ESP_LOGI(TAG, "SLEEP_WAKEUP_WIFI_BIT received");
+			esp_wifi_connect();
 		} else if( bits & TCP_CONNECTED_BIT ){
+			ESP_LOGI(TAG, "TCP_CONNECTED_BIT received");
 			/* next step */
 		} else if( bits & TCP_FAILED_BIT ){
+			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
+			/* Restore the cleared bit */
+			xEventGroupSetBits( s_wifi_event_group, TCP_FAILED_BIT );
 			/* wait and start tcp task again */
+			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
+ 			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
+		} else if ( bits & SLEEP_WAKEUP_TCP_BIT ) {
+			ESP_LOGI(TAG, "SLEEP_WAKEUP_TCP_BIT received");
+			esp_wifi_connect();
 		} else {
 			ESP_LOGE(TAG, "UNEXPECTED EVENT");
 		}

@@ -63,8 +63,8 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 				ESP_LOGI(TAG, "event handler: esp_wifi_connect() done, retry %d", s_retry_num);
 				s_retry_num++;
 			} else {
-				xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-				ESP_LOGI(TAG, "event handler: xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT) done");
+				xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECTED_BIT);
+				ESP_LOGI(TAG, "event handler: xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECTED_BIT) done");
 				s_retry_num = 0;
 			}
 			ESP_LOGI(TAG, "event handler: connect to the AP failed");

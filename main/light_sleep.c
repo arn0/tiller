@@ -26,7 +26,12 @@ static const char *TAG = "light_sleep";
 
 void light_sleep_task(void *args)
 {
+	EventBits_t bits;
 	ESP_LOGI(TAG, "Entering light sleep");
+
+	/* Find reason for sleep */
+	bits = xEventGroupWaitBits( s_wifi_event_group, WIFI_DISCONNECTED_BIT | TCP_FAILED_BIT, pdTRUE, pdFALSE, portMAX_DELAY );
+
 	/* To make sure the complete line is printed before entering sleep mode,
 	 * need to wait until UART TX FIFO is empty:
 	 */
@@ -60,7 +65,11 @@ void light_sleep_task(void *args)
 			wakeup_reason = "other";
 			break;
 	}
-	xEventGroupSetBits((EventGroupHandle_t)args, SLEEP_WAKEUP_BIT);
+	if ( bits & WIFI_DISCONNECTED_BIT ) {
+		xEventGroupSetBits((EventGroupHandle_t)args, SLEEP_WAKEUP_WIFI_BIT);
+	} else if ( bits & TCP_FAILED_BIT ) {
+		xEventGroupSetBits((EventGroupHandle_t)args, SLEEP_WAKEUP_TCP_BIT);
+	}
 	ESP_LOGI(TAG, "Returned from light sleep, reason: %s, t=%lld ms, slept for %lld ms", wakeup_reason, t_after_us / 1000, (t_after_us - t_before_us) / 1000);
 	vTaskDelete(NULL);
 }
