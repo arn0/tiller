@@ -1,3 +1,4 @@
+#include "freertos/event_groups.h"
 #include "esp_event.h"
 
 /* The event group allows multiple bits for each event, but we only care about two events:
