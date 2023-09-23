@@ -9,6 +9,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "esp_netif_sntp.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -32,18 +33,26 @@ void app_main(void)
 	esp_log_level_set("timer_wakeup", ESP_LOG_VERBOSE);
 	esp_log_level_set("uart_wakeup", ESP_LOG_VERBOSE);
 
-		//Initialize NVS
-		esp_err_t ret = nvs_flash_init();
-		if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-			ESP_ERROR_CHECK(nvs_flash_erase());
-			ret = nvs_flash_init();
-		}
-		ESP_ERROR_CHECK(ret);
+	//Initialize NVS
+	esp_err_t ret = nvs_flash_init();
+	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+		ESP_ERROR_CHECK(nvs_flash_erase());
+		ret = nvs_flash_init();
+	}
+	ESP_ERROR_CHECK(ret);
+
+	setenv( "TZ", "CET-1CEST,M3.5.0/2,M10.5.0/3", 100 );
+	tzset();
 
 	ESP_LOGI(TAG, "Start wifi_init_station()");
 	wifi_init_station();
 
-	EventBits_t bits;
+// When WiFi gets disconnected, wifi_event_handler will initiate reconnect attempts
+// maxes out at ESP_MAXIMUM_RETRY.
+// need to make this indefinite, with sleep time.
+
+
+EventBits_t bits;
 	light_sleep_prepare();
 
 	while( true ) {
@@ -54,7 +63,13 @@ void app_main(void)
 
 		if ( bits & WIFI_CONNECTED_BIT ) {
 			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
-			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
+     		
+			/* Use sntp server to set system time */
+			esp_netif_sntp_init( &sntp_config );
+     		if ( esp_netif_sntp_sync_wait( pdMS_TO_TICKS( 10000 ) ) != ESP_OK ) {
+         	ESP_LOGE( TAG, "Failed to update system time within 10s timeout" );
+ 			}
+ 			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else if ( bits & WIFI_FAIL_BIT ) {
 			ESP_LOGI(TAG, "Failed to connect to SSID:%s", SECRET_SSID);
 			vTaskDelay( 200 / portTICK_PERIOD_MS );
