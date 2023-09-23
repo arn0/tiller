@@ -80,6 +80,8 @@ void app_main(void)
 			/* next step */
 		} else if( bits & TCP_FAILED_BIT ){
 			/* wait and start tcp task again */
+			vTaskDelay( 5000 / portTICK_PERIOD_MS );
+ 			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else {
 			ESP_LOGE(TAG, "UNEXPECTED EVENT");
 		}
