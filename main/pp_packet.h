@@ -11,7 +11,5 @@ typedef union { uint32_t packed;
 } pypi_packet;
 
 
-bool pypi_put_rx_packet( pypi_packet packet );
-bool pypi_get_rx_packet( pypi_packet *packet );
+bool pp_get_rx_packet( pypi_packet *packet );
 void pp_put_tx_packet( pypi_packet packet );
-bool pypi_get_tx_packet( pypi_packet *packet );

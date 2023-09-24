@@ -81,7 +81,7 @@ void app_main(void)
 		} else if( bits & TCP_CONNECTED_BIT ){
 			/* next step */
  			xTaskCreate( control_loop, "control_loop", 4096, NULL, 5, NULL );
- 			xTaskCreate( test_task_rx, "test_task_rx", 4096, NULL, 5, NULL );
+ 			//xTaskCreate( test_task_rx, "test_task_rx", 4096, NULL, 5, NULL );
 		} else if( bits & TCP_FAILED_BIT ){
 			/* wait and start tcp task again */
 			vTaskDelay( 5000 / portTICK_PERIOD_MS );

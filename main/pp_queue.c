@@ -47,6 +47,15 @@ void queue_send_tx( void* packet ) {
 	}
 }
 
+bool queue_get_rx( void* packet ) {
+	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
+	if( uxNumberOfItems > 0 ) {
+		xQueueReceive( tx_Queue, (void*) packet, (TickType_t) 0 );
+		return( true );
+	}
+	return( false );
+}
+
 void test_task_tx() {
 	char txBuffer[4] = { 'a','b','c',0 };
 	UBaseType_t uxNumberOfItems;

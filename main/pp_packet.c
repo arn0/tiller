@@ -1,8 +1,5 @@
 // Communication between TCP and pypilot control.
 
-
-
-
 /*
 The program uses a simple protocol to ensure only
 correct data can be received and to ensure that
@@ -19,58 +16,42 @@ If incoming data has the correct crc for a few frames
 the command can be recognized.
 */
 
-#include <inttypes.h>
 #include <stdbool.h>
 
 #include "pp_packet.h"
+
+#include "pp_queue.h"
 #include "crc.h"
+
+extern bool rx_sync;
 
 static const char *TAG = "> pp_packet";
 
-pypi_packet pypi_rx_buffer[4];
-pypi_packet pypi_tx_buffer[4];
-
-int8_t pypi_rx_len = 0;
-int8_t pypi_tx_len = 0;
+bool pp_rx_sync_flag = false;		/* No sync yet */
 
 
-bool pypi_put_rx_packet( pypi_packet packet ){
-    if( crc8( packet.byte, 3 ) == packet.byte[3] ){
-        if( pypi_rx_len < 4 ) {
-            pypi_rx_buffer[pypi_rx_len] = packet;
-            pypi_rx_len++;
-            return( true );
-        }
-    }
-    return( false );    //error
+/* Set the staus of the communication from pypilot remote to local servo */
+
+void pp_set_rx_sync( bool flag ){
+	pp_rx_sync_flag = flag;
+	rx_sync = flag;
 }
 
- bool pypi_get_rx_packet( pypi_packet *packet ){
-    if( pypi_rx_len > 0 ){
-        *packet = pypi_rx_buffer[pypi_rx_len-1];
-        for( int i = 0; i < pypi_rx_len-1; i++){
-            pypi_rx_buffer[i] = pypi_rx_buffer[i+1];
-        }
-        pypi_rx_len--;
-        return( true );
-    }
-    return( false );    //error
+/* Get a received packet out of the the the queue */
 
+bool pp_get_rx_packet( pypi_packet *packet ) {
+	if( queue_get_rx( packet ) ) {
+		if( crc8( packet->byte, 3 ) == packet->byte[3] ) {
+			return( true );
+		}
+		pp_set_rx_sync( false );
+	}
+	return( false );
 }
+
+/* Put a packet to be transmitted into the queue */
 
 void pp_put_tx_packet( pypi_packet packet ) {
 	packet.byte[3] = crc8( packet.byte, 3 );
-
-}
-
-bool pypi_get_tx_packet( pypi_packet *packet ){
-    if( pypi_tx_len > 0 ){
-        *packet = pypi_tx_buffer[pypi_tx_len-1];
-        for( int i = 0; i < pypi_tx_len-1; i++){
-            pypi_tx_buffer[i] = pypi_tx_buffer[i+1];
-        }
-        pypi_tx_len--;
-        return( true );
-    }
-    return( false );    //error
+	queue_send_tx( (void *) &packet );
 }

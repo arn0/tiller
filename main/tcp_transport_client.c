@@ -21,8 +21,10 @@
 
 #include "events.h"
 #include "pp_queue.h"
+#include "crc.h"
 #include "../../secret.h"
 
+#define PACKET_SIZE 4
 
 static const char *TAG = "> tcp_transport_client";
 
@@ -31,7 +33,7 @@ void tcp_transport_client_task(void *pvParameters)
 	
 	char tx_buffer[4];
 	char rx_buffer[128];
-	char host_ip[] = SECRET_ADDR;
+	bool rx_sync = false;
 	esp_transport_handle_t transport = esp_transport_tcp_init();
 	UBaseType_t uxNumberOfItems;
 
@@ -58,32 +60,68 @@ void tcp_transport_client_task(void *pvParameters)
 					ESP_LOGE(TAG, "Error occurred during sending: esp_transport_write() returned %d, errno %d", bytes_written, errno);
 					break;
 				}
+				ESP_LOGI(TAG, "TX : %hx %hx %hx %hx", tx_buffer[0], tx_buffer[1], tx_buffer[2], tx_buffer[3] );
 			}
+
 			/* Receive */
-			int len = esp_transport_read(transport, rx_buffer, sizeof(rx_buffer) - 1, 0 );
-			if ( len > 0 ) {
-				uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
-				if( uxNumberOfItems < RX_QUEUE_LENGTH ) {
-					int i = 0;
-					do {
-						xQueueSend( rx_Queue, (void*) &rx_buffer[i++], (TickType_t) 0 );
-						} while ( i < len && i < RX_QUEUE_LENGTH - uxNumberOfItems );
+			uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
+			if( uxNumberOfItems < RX_QUEUE_LENGTH ) {
+				int len = esp_transport_read(transport, rx_buffer, PACKET_SIZE, 0 );
+				if ( len == PACKET_SIZE ) {
+					if ( crc8( (uint8_t*) rx_buffer, 3 ) == rx_buffer[3] ) {
+						xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
+						rx_sync = true;
+						ESP_LOGI(TAG, "RX : %hx %hx %hx %hx", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3] );
 					} else {
-						ESP_LOGE(TAG, "rx_queue overflow" );
+						rx_sync = false;
 					}
+				}
+				if( !rx_sync ) {
+					if ( len == PACKET_SIZE ) {
+						int i;
 
+						for ( i=0; i<PACKET_SIZE; i++ ) {
+							rx_buffer[i] = rx_buffer[i+1];			// shift first byte out of rx_buffer 
+						}
+						len = esp_transport_read(transport, &rx_buffer[i], 1, 0 ); // get another byte
+						if ( len == 1) {
+							if ( crc8( (uint8_t*) rx_buffer, 3 ) == (uint8_t) rx_buffer[3] ) {
+								rx_sync = true;
+								xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
+						} else {
+							// major problem if we get here
+							ESP_LOGE(TAG, "rx decoding error" );
+							break;
+						}
+						} else {
+							int in_bytes = len;
 
-			} else if ( len > 0 ){
-				// Error occurred during receiving
-				ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
-				break;
+							len = esp_transport_read(transport, &rx_buffer[len-1], PACKET_SIZE-len, 0 ); // get more bytes
+							len += in_bytes; 
+							if ( len == PACKET_SIZE ) {
+								if ( crc8( (uint8_t*) rx_buffer, 3 ) == rx_buffer[3] ) {
+									rx_sync = true;
+									xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
+								}
+								} else {
+									// major problem if we get here
+									ESP_LOGE(TAG, "rx decoding error" );
+									break;
+								}
+							}
+						} 
+
+				}
+				if ( len < 0 ) {
+					// Error occurred during receiving
+					ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
+					break;
+				}
+			} else {
+				ESP_LOGE(TAG, "rx_queue overflow" );
 			}
-			// Data received
-			rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-			ESP_LOGI(TAG, "Received %d bytes from %s:", len, host_ip);
-			ESP_LOGI(TAG, "Received data : %s", rx_buffer);
 
-			vTaskDelay(2000 / portTICK_PERIOD_MS);
+			vTaskDelay( 100 / portTICK_PERIOD_MS );
 		}
 
 		ESP_LOGE(TAG, "Shutting down transport and restarting...");

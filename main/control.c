@@ -215,9 +215,9 @@ void send_loop()
         packet.p.command = MOTOR_TEMP_CODE;
         break;
     case 16: case 26: case 36: /* eeprom reads */
-        break;
+        return;
     default:
-        break;
+        return;
     }
     pp_put_tx_packet( packet );
 }
@@ -232,7 +232,7 @@ void control_loop(void *p) {
         //    process_packet( packet );
             send_loop();
         //}
-		vTaskDelay( 500 / portTICK_PERIOD_MS );
+		vTaskDelay( 20 / portTICK_PERIOD_MS );
     }
     vTaskDelete(NULL);
 }

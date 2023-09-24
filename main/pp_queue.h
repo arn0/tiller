@@ -26,8 +26,8 @@
 /* The queue is to be created to hold a maximum of 32 uint32_t variables. */
 #define TX_QUEUE_LENGTH 32
 #define TX_QUEUE_ITEM_SIZE sizeof( uint32_t )
-#define RX_QUEUE_LENGTH ( TX_QUEUE_LENGTH * 4 )
-#define RX_QUEUE_ITEM_SIZE sizeof( uint8_t )
+#define RX_QUEUE_LENGTH TX_QUEUE_LENGTH
+#define RX_QUEUE_ITEM_SIZE TX_QUEUE_ITEM_SIZE
 
 /* The variable used to hold the queue's data structure. */
 extern StaticQueue_t tx_xStaticQueue;
@@ -46,4 +46,4 @@ void test_task_tx();
 void test_task_rx();
 
 void queue_send_tx( void* packet );
-
+bool queue_get_rx( void* packet );
