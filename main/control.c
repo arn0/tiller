@@ -18,14 +18,10 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 
-#include "wifi.h"
-#include "tcp_client.h"
-#include "control.h"
+#include "pp_packet.h"
 
 
-#include "pypi_comm.h"
-
-static const char *TAG = ">>> control";
+static const char *TAG = "> control";
 
 
 enum commands {COMMAND_CODE=0xc7, RESET_CODE=0xe7, MAX_CURRENT_CODE=0x1e, MAX_CONTROLLER_TEMP_CODE=0xa4, MAX_MOTOR_TEMP_CODE=0x5a, RUDDER_RANGE_CODE=0xb6, RUDDER_MIN_CODE=0x2b, RUDDER_MAX_CODE=0x4d, REPROGRAM_CODE=0x19, DISENGAGE_CODE=0x68, MAX_SLEW_CODE=0x71, EEPROM_READ_CODE=0x91, EEPROM_WRITE_CODE=0x53, CLUTCH_PWM_AND_BRAKE_CODE=0x36};
@@ -223,21 +219,20 @@ void send_loop()
     default:
         break;
     }
-    pypi_put_tx_packet( packet );
+    pp_put_tx_packet( packet );
 }
 
-void control_loop(void *p){
-    pypi_packet packet;
-
+void control_loop(void *p) {
     control_settings.low_current = 2000;
 
     send_loop();
 
-    while(true){
-        if( pypi_get_rx_packet( &packet ) ){
-            process_packet( packet );
+    while( true ) {
+        //if( pypi_get_rx_packet( &packet ) ) {
+        //    process_packet( packet );
             send_loop();
-        }
+        //}
+		vTaskDelay( 500 / portTICK_PERIOD_MS );
     }
     vTaskDelete(NULL);
 }

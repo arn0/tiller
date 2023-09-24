@@ -22,10 +22,10 @@ the command can be recognized.
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "pypi_comm.h"
+#include "pp_packet.h"
 #include "crc.h"
 
-static const char *TAG = ">>> pypi_comm";
+static const char *TAG = "> pp_packet";
 
 pypi_packet pypi_rx_buffer[4];
 pypi_packet pypi_tx_buffer[4];
@@ -58,14 +58,9 @@ bool pypi_put_rx_packet( pypi_packet packet ){
 
 }
 
-bool pypi_put_tx_packet( pypi_packet packet ){
-    if( pypi_tx_len < 4 ) {
-        packet.byte[3] = crc8( packet.byte, 3 );
-        pypi_tx_buffer[pypi_tx_len] = packet;
-        pypi_tx_len++;
-        return( true );
-    }
-    return( false );    //error
+void pp_put_tx_packet( pypi_packet packet ) {
+	packet.byte[3] = crc8( packet.byte, 3 );
+
 }
 
 bool pypi_get_tx_packet( pypi_packet *packet ){
