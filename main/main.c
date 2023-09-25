@@ -74,13 +74,14 @@ void app_main(void)
 			ESP_ERROR_CHECK( esp_wifi_stop() );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
 		} else if ( bits & SLEEP_WAKEUP_BIT ) {
-				ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
-				ESP_ERROR_CHECK( esp_wifi_start ());
+			ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
+			ESP_ERROR_CHECK( esp_wifi_start ());
 		} else if( bits & TCP_CONNECTED_BIT ){
+			ESP_LOGI(TAG, "TCP_CONNECTED_BIT received");
 			/* next step */
  			xTaskCreate( control_loop, "control_loop", 4096, NULL, 5, NULL );
- 			//xTaskCreate( test_task_rx, "test_task_rx", 4096, NULL, 5, NULL );
 		} else if( bits & TCP_FAILED_BIT ){
+			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
 			/* kill control loop task */
 			/* wait and start tcp task again */
 			vTaskDelay( 5000 / portTICK_PERIOD_MS );
