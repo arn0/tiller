@@ -107,4 +107,5 @@ void pp_decode( char* buffer, int len ) {
 		}
 	}
 	shift_out( temp_buffer, p - temp_buffer, e - p );	// shift buffer
+	temp = e - p;
 }
