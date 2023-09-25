@@ -10,6 +10,9 @@ typedef union { uint32_t packed;
                        } p;
 } pypi_packet;
 
+void pp_set_rx_sync( bool flag );
+extern bool pp_rx_sync_flag;
 
+void pp_decode( char* buffer, int len );
 bool pp_get_rx_packet( pypi_packet *packet );
 void pp_put_tx_packet( pypi_packet packet );

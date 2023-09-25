@@ -64,11 +64,13 @@ void process_packet( pypi_packet packet )
             break;
  
          case RESET_CODE:
+            ESP_LOGI(TAG, "Received RESET_CODE, value %d:", packet.p.value);
                                                                 // reset overcurrent flag
             flags &= ~OVERCURRENT_FAULT;
             break;
         
         case COMMAND_CODE:
+            ESP_LOGI(TAG, "Received COMMAND_CODE, value %d:", packet.p.value);
             //  timeout = 0;
             //  if(serialin < 12)
             //      serialin+=4; // output at input rate
@@ -88,6 +90,7 @@ void process_packet( pypi_packet packet )
             break;
 
         case MAX_CURRENT_CODE:                                  // current in units of 10mA
+            ESP_LOGI(TAG, "Received MAX_CURRENT_CODE, value %d:", packet.p.value);
             unsigned int max_max_current = control_settings.low_current ? 2000 : 5000;
             if( packet.p.value > max_max_current)               // maximum is 20 or 50 amps
                 packet.p.value = max_max_current;
@@ -95,32 +98,38 @@ void process_packet( pypi_packet packet )
             break;
     
         case MAX_CONTROLLER_TEMP_CODE:
+            ESP_LOGI(TAG, "Received MAX_CONTROLLER_TEMP_CODE, value %d:", packet.p.value);
             if( packet.p.value > 10000 )            // maximum is 100C
                 packet.p.value = 10000;
             control_settings.max_controller_temp = packet.p.value;
             break;
 
         case MAX_MOTOR_TEMP_CODE:
+            ESP_LOGI(TAG, "Received MAX_MOTOR_TEMP_CODE, value %d:", packet.p.value);
             if( packet.p.value > 10000)                       // maximum is 100C
                 packet.p.value = 10000;
             control_settings.max_motor_temp = packet.p.value;
             break;
 
         case RUDDER_MIN_CODE:
+            ESP_LOGI(TAG, "Received RUDDER_MIN_CODE, value %d:", packet.p.value);
             control_settings.rudder_min = packet.p.value;
             break;
 
         case RUDDER_MAX_CODE:
+            ESP_LOGI(TAG, "Received RUDDER_MAX_CODE, value %d:", packet.p.value);
             control_settings.rudder_max = packet.p.value;
             break;
 
         case DISENGAGE_CODE:
+            ESP_LOGI(TAG, "Received DISENGAGE_CODE, value %d:", packet.p.value);
             // if(serialin < 12)
                 // serialin+=4; // output at input rate
             //disengage();
             break;
 
         case MAX_SLEW_CODE:
+            ESP_LOGI(TAG, "Received MAX_SLEW_CODE, value %d:", packet.p.value);
             control_settings.max_slew_speed = packet.byte[1];
             control_settings.max_slew_slow = packet.byte[2];
 
@@ -146,6 +155,7 @@ void process_packet( pypi_packet packet )
             break;
 
         case CLUTCH_PWM_AND_BRAKE_CODE:
+            ESP_LOGI(TAG, "Received CLUTCH_PWM_AND_BRAKE_CODE, value %d:", packet.p.value);
             control_settings.clutch_pwm = packet.byte[1];
             if( control_settings.clutch_pwm < 30 )
                 control_settings.clutch_pwm = 30;
@@ -153,6 +163,8 @@ void process_packet( pypi_packet packet )
                 control_settings.clutch_pwm = 255;
             control_settings.use_brake = packet.byte[2];
             break;
+        default:
+            ESP_LOGI(TAG, "Received unknown comman, command %d, value %d:", packet.p.command, packet.p.value);
     }
 }
 
@@ -224,15 +236,18 @@ void send_loop()
 
 void control_loop(void *p) {
     control_settings.low_current = 2000;
+    pypi_packet packet;
 
     send_loop();
 
     while( true ) {
-        //if( pypi_get_rx_packet( &packet ) ) {
-        //    process_packet( packet );
-            send_loop();
-        //}
-		vTaskDelay( 20 / portTICK_PERIOD_MS );
+        if( pp_get_rx_packet( &packet ) ) {
+            process_packet( packet );
+        } else {
+            vTaskDelay( 50 / portTICK_PERIOD_MS );
+        }
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        send_loop();
     }
     vTaskDelete(NULL);
 }

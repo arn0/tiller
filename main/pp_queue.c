@@ -38,46 +38,31 @@ void test_init() {
 	}
 }
 
-void queue_send_tx( void* packet ) {
+void queue_put_tx( void* packet ) {
 	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
-	if( uxNumberOfItems <= TX_QUEUE_LENGTH ) {
+	if( uxNumberOfItems < TX_QUEUE_LENGTH ) {
 		xQueueSend( tx_Queue, packet, (TickType_t) 0 );
 	} else {
 		ESP_LOGE(TAG, "tx queue overload" );
 	}
 }
 
+bool queue_put_rx( void* packet ) {
+	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
+	if( uxNumberOfItems < TX_QUEUE_LENGTH ) {
+		xQueueSend( rx_Queue, (void*) packet, (TickType_t) 0 );
+		return( true );
+	} else {
+		ESP_LOGE(TAG, "rx queue overload" );
+		return( false );
+	}
+}
+
 bool queue_get_rx( void* packet ) {
-	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
+	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
 	if( uxNumberOfItems > 0 ) {
-		xQueueReceive( tx_Queue, (void*) packet, (TickType_t) 0 );
+		xQueueReceive( rx_Queue, (void*) packet, (TickType_t) 0 );
 		return( true );
 	}
 	return( false );
-}
-
-void test_task_tx() {
-	char txBuffer[4] = { 'a','b','c',0 };
-	UBaseType_t uxNumberOfItems;
-	do {
-		uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
-		if( uxNumberOfItems <= TX_QUEUE_LENGTH ) {
-			xQueueSend( tx_Queue, (void*) txBuffer, (TickType_t) 0 );
-		}
-		vTaskDelay( 100 / portTICK_PERIOD_MS );
-	} while( true );
-}
-
-void test_task_rx() {
-	char rxBuffer[4];
-	UBaseType_t uxNumberOfItems;
-
-	do {
-		/* How many items are currently in the queue referenced by the xQueue handle? */
-		uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
-		if( uxNumberOfItems > 0 ) {
-			xQueueReceive( tx_Queue, (void*) rxBuffer, (TickType_t) 0 );
-		}
-		vTaskDelay( 10 / portTICK_PERIOD_MS );
-	} while( true );
 }

@@ -20,11 +20,10 @@
 #include "esp_transport_socks_proxy.h"
 
 #include "events.h"
+#include "pp_packet.h"
 #include "pp_queue.h"
 #include "crc.h"
 #include "../../secret.h"
-
-#define PACKET_SIZE 4
 
 static const char *TAG = "> tcp_transport_client";
 
@@ -33,7 +32,6 @@ void tcp_transport_client_task(void *pvParameters)
 	
 	char tx_buffer[4];
 	char rx_buffer[128];
-	bool rx_sync = false;
 	esp_transport_handle_t transport = esp_transport_tcp_init();
 	UBaseType_t uxNumberOfItems;
 
@@ -64,63 +62,15 @@ void tcp_transport_client_task(void *pvParameters)
 			}
 
 			/* Receive */
-			uxNumberOfItems = uxQueueMessagesWaiting( rx_Queue );
-			if( uxNumberOfItems < RX_QUEUE_LENGTH ) {
-				int len = esp_transport_read(transport, rx_buffer, PACKET_SIZE, 0 );
-				if ( len == PACKET_SIZE ) {
-					if ( crc8( (uint8_t*) rx_buffer, 3 ) == rx_buffer[3] ) {
-						xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
-						rx_sync = true;
-						ESP_LOGI(TAG, "RX : %hx %hx %hx %hx", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3] );
-					} else {
-						rx_sync = false;
-					}
-				}
-				if( !rx_sync ) {
-					if ( len == PACKET_SIZE ) {
-						int i;
-
-						for ( i=0; i<PACKET_SIZE; i++ ) {
-							rx_buffer[i] = rx_buffer[i+1];			// shift first byte out of rx_buffer 
-						}
-						len = esp_transport_read(transport, &rx_buffer[i], 1, 0 ); // get another byte
-						if ( len == 1) {
-							if ( crc8( (uint8_t*) rx_buffer, 3 ) == (uint8_t) rx_buffer[3] ) {
-								rx_sync = true;
-								xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
-						} else {
-							// major problem if we get here
-							ESP_LOGE(TAG, "rx decoding error" );
-							break;
-						}
-						} else {
-							int in_bytes = len;
-
-							len = esp_transport_read(transport, &rx_buffer[len-1], PACKET_SIZE-len, 0 ); // get more bytes
-							len += in_bytes; 
-							if ( len == PACKET_SIZE ) {
-								if ( crc8( (uint8_t*) rx_buffer, 3 ) == rx_buffer[3] ) {
-									rx_sync = true;
-									xQueueSend( rx_Queue, (void*) rx_buffer, (TickType_t) 0 );
-								}
-								} else {
-									// major problem if we get here
-									ESP_LOGE(TAG, "rx decoding error" );
-									break;
-								}
-							}
-						} 
-
-				}
-				if ( len < 0 ) {
-					// Error occurred during receiving
-					ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
-					break;
-				}
-			} else {
-				ESP_LOGE(TAG, "rx_queue overflow" );
+			int len = esp_transport_read(transport, rx_buffer, sizeof(rx_buffer), 0 );
+			if ( len < 0 ) {
+				// Error occurred during receiving
+				ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
+				break;
+			} else if ( len > 0 ) {
+				ESP_LOGI(TAG, "received %d bytes", len);
+				pp_decode( rx_buffer, len );
 			}
-
 			vTaskDelay( 100 / portTICK_PERIOD_MS );
 		}
 
@@ -130,5 +80,6 @@ void tcp_transport_client_task(void *pvParameters)
 	esp_transport_destroy(transport);
 	xEventGroupSetBits( s_wifi_event_group, TCP_FAILED_BIT );
 
+	pp_set_rx_sync( false );
 	vTaskDelete(NULL);
 }
