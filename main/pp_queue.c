@@ -4,8 +4,6 @@
 
 #include "pp_queue.h"
 
-/* Test */
-
 /* The variable used to hold the queue's data structure. */
 StaticQueue_t tx_xStaticQueue;
 StaticQueue_t rx_xStaticQueue;
@@ -21,11 +19,7 @@ QueueHandle_t rx_Queue;
 
 static const char *TAG = "> pp_queue";
 
-
-
-/* Test */
-
-void test_init() {
+void queue_init() {
 
 	/* Create a queue capable of containing 10 uint64_t values. */
 	tx_Queue = xQueueCreateStatic( TX_QUEUE_LENGTH, TX_QUEUE_ITEM_SIZE, tx_ucQueueStorageArea, &tx_xStaticQueue );
@@ -38,13 +32,24 @@ void test_init() {
 	}
 }
 
-void queue_put_tx( void* packet ) {
+bool queue_put_tx( void* packet ) {
 	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
 	if( uxNumberOfItems < TX_QUEUE_LENGTH ) {
 		xQueueSend( tx_Queue, packet, (TickType_t) 0 );
+		return( true );
 	} else {
 		ESP_LOGE(TAG, "tx queue overload" );
+		return( false );
 	}
+}
+
+bool queue_get_tx( void* packet ) {
+	UBaseType_t uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
+	if( uxNumberOfItems > 0 ) {
+		xQueueReceive( tx_Queue, packet, (TickType_t) 0 );
+		return( true );
+	}
+	return( false );
 }
 
 bool queue_put_rx( void* packet ) {

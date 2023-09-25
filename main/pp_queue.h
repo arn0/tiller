@@ -37,12 +37,9 @@ extern QueueHandle_t tx_Queue;
 extern QueueHandle_t rx_Queue;
 
 
+void queue_init();
 
-
-/* Test */
-
-void test_init();
-
-void queue_put_tx( void* packet );
+bool queue_put_tx( void* packet );
+bool queue_get_tx( void* packet );
 bool queue_put_rx( void* packet );
 bool queue_get_rx( void* packet );
