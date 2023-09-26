@@ -19,6 +19,7 @@
 #include "tcp_transport_client.h"
 #include "light_sleep.h"
 #include "control.h"
+#include "pp_queue.h"
 #include "../../secret.h"
 
 static const char *TAG = ">main";
@@ -50,7 +51,7 @@ void app_main(void)
 
 	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
 
-	test_init();		// init xQueue
+	queue_init();		// init xQueue
 
 	EventBits_t bits;
 	light_sleep_prepare();

@@ -88,11 +88,11 @@ void pp_decode( char* buffer, int len ) {
 	while ( crc8( (uint8_t*) p, 3 ) != p[3] ) {			//find valid packet
 		p++;
 		if( p > e - 3 ) {											// out of received bytes? need 4 for a packet
-			ESP_LOGI(TAG, "no sync");
+			ESP_LOGE(TAG, "no sync");
 			return;													// wait for more
 		}
 	}
-	ESP_LOGI(TAG, "sync");
+	//ESP_LOGI(TAG, "sync");
 	if ( queue_put_rx( p ) ) {								// packet
 		p += 4;
 	}

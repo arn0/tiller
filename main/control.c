@@ -242,12 +242,11 @@ void control_loop(void *p) {
 
     while( true ) {
         if( pp_get_rx_packet( &packet ) ) {
+            send_loop();
             process_packet( packet );
         } else {
             vTaskDelay( 50 / portTICK_PERIOD_MS );
         }
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
-        send_loop();
     }
     vTaskDelete(NULL);
 }

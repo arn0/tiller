@@ -29,7 +29,6 @@ static const char *TAG = "> tcp_transport_client";
 
 void tcp_transport_client_task(void *pvParameters)
 {
-	
 	char tx_buffer[4];
 	char rx_buffer[128];
 	esp_transport_handle_t transport = esp_transport_tcp_init();
@@ -58,7 +57,7 @@ void tcp_transport_client_task(void *pvParameters)
 					ESP_LOGE(TAG, "Error occurred during sending: esp_transport_write() returned %d, errno %d", bytes_written, errno);
 					break;
 				}
-				ESP_LOGI(TAG, "TX : %hx %hx %hx %hx", tx_buffer[0], tx_buffer[1], tx_buffer[2], tx_buffer[3] );
+				//ESP_LOGI(TAG, "TX : %hx %hx %hx %hx", tx_buffer[0], tx_buffer[1], tx_buffer[2], tx_buffer[3] );
 			}
 
 			/* Receive */
@@ -68,10 +67,10 @@ void tcp_transport_client_task(void *pvParameters)
 				ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
 				break;
 			} else if ( len > 0 ) {
-				ESP_LOGI(TAG, "received %d bytes", len);
+				//ESP_LOGI(TAG, "received %d bytes", len);
 				pp_decode( rx_buffer, len );
 			}
-			vTaskDelay( 100 / portTICK_PERIOD_MS );
+			vTaskDelay( 10 / portTICK_PERIOD_MS );
 		}
 
 		ESP_LOGE(TAG, "Shutting down transport and restarting...");
