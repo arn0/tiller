@@ -205,26 +205,32 @@ void send_packet()
         packet.p.value = flags;
         flags &= ~REBOOTED;
         packet.p.command = FLAGS_CODE;
+        ESP_LOGI(TAG, "Send FLAGS_CODE, value %d:", packet.p.value);
         break;
     case 1: case 4: case 7: case 11: case 14: case 17: case 21: case 24: case 27: case 31: case 34: case 37: case 40:
         packet.p.value = 1000;
         packet.p.command = CURRENT_CODE;
+        ESP_LOGI(TAG, "Send CURRENT_CODE, value %d:", packet.p.value);
         break;
     case 2: case 5: case 8: case 12: case 15: case 18: case 22: case 25: case 28: case 32: case 35: case 38: case 41:
         packet.p.value = 1000;
         packet.p.command = RUDDER_SENSE_CODE;
+        ESP_LOGI(TAG, "Send RUDDER_SENSE_CODE, value %d:", packet.p.value);
         break;
     case 3: case 13: case 23: case 33:
         packet.p.value = 1200;
         packet.p.command = VOLTAGE_CODE;
+        ESP_LOGI(TAG, "Send VOLTAGE_CODE, value %d:", packet.p.value);
         break;
     case 6:
         packet.p.value = 6600;
         packet.p.command = CONTROLLER_TEMP_CODE;
+        ESP_LOGI(TAG, "Send CONTROLLER_TEMP_CODE, value %d:", packet.p.value);
         break;
     case 9:
         packet.p.value = 4200; // 1200 = 12C
         packet.p.command = MOTOR_TEMP_CODE;
+        ESP_LOGI(TAG, "Send MOTOR_TEMP_CODE, value %d:", packet.p.value);
         break;
     case 16: case 26: case 36: /* eeprom reads */
         return;
