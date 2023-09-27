@@ -53,6 +53,10 @@ bool pp_get_rx_packet( pypi_packet *packet ) {
 /* Put a packet to be transmitted into the queue */
 
 void pp_put_tx_packet( pypi_packet packet ) {
+	uint8_t c;
+	c = packet.byte[1];
+	packet.byte[1] = packet.byte[2];
+	packet.byte[2] = c;
 	packet.byte[3] = crc8( packet.byte, 3 );
 	queue_put_tx( (void *) &packet );
 }
@@ -69,6 +73,7 @@ void shift_out( char* buffer, int shift, int length ) {
 }
 
 void pp_decode( char* buffer, int len ) {
+	uint8_t c;
 	//ESP_LOGI(TAG, "start, len = %d", len);
 	
 	if( len + temp > sizeof(temp_buffer) ){				// test if we have room for the new bytes
@@ -93,12 +98,19 @@ void pp_decode( char* buffer, int len ) {
 		}
 	}
 	//ESP_LOGI(TAG, "sync");
+	c = p[1];
+	p[1] = p[2];
+	p[2] = c;
+
 	if ( queue_put_rx( p ) ) {								// packet
 		p += 4;
 	}
 	while( p < e ) {												// test for more packets
 		if( crc8( (uint8_t*) p, 3 ) == p[3] ) {
 			//ESP_LOGI(TAG, "sync");
+			c = p[1];
+			p[1] = p[2];
+			p[2] = c;
 			if ( queue_put_rx( p ) ) {
 				p += 4;
 			} else {
