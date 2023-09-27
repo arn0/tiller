@@ -168,7 +168,7 @@ void process_packet( pypi_packet packet )
     }
 }
 
-void send_loop()
+void send_packet()
 {
         pypi_packet packet;
 
@@ -229,6 +229,9 @@ void send_loop()
     case 16: case 26: case 36: /* eeprom reads */
         return;
     default:
+        if( out_sync_pos > 63 ) {
+            out_sync_pos = 0;
+        }
         return;
     }
     pp_put_tx_packet( packet );
@@ -238,15 +241,13 @@ void control_loop(void *p) {
     control_settings.low_current = 2000;
     pypi_packet packet;
 
-    //send_loop();
-
     while( true ) {
         if( pp_get_rx_packet( &packet ) ) {
-            send_loop();
             process_packet( packet );
+            send_packet();
             vTaskDelay( 2 / portTICK_PERIOD_MS );
         } else {
-            vTaskDelay( 50 / portTICK_PERIOD_MS );
+            vTaskDelay( 20 / portTICK_PERIOD_MS );
         }
     }
     vTaskDelete(NULL);
