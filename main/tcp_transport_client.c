@@ -52,7 +52,7 @@ void tcp_transport_client_task(void *pvParameters)
 			uxNumberOfItems = uxQueueMessagesWaiting( tx_Queue );
 			if( uxNumberOfItems > 0 ) {
 				xQueueReceive( tx_Queue, (void*) tx_buffer, (TickType_t) 0 );
-				int bytes_written = esp_transport_write( transport, tx_buffer, sizeof(tx_buffer), 0 );
+				int bytes_written = esp_transport_write( transport, tx_buffer, sizeof(tx_buffer), 10 );
 				if (bytes_written < 0) {
 					ESP_LOGE(TAG, "Error occurred during sending: esp_transport_write() returned %d, errno %d", bytes_written, errno);
 					break;
@@ -61,7 +61,7 @@ void tcp_transport_client_task(void *pvParameters)
 			}
 
 			/* Receive */
-			int len = esp_transport_read(transport, rx_buffer, sizeof(rx_buffer), 0 );
+			int len = esp_transport_read(transport, rx_buffer, sizeof(rx_buffer), 10 );
 			if ( len < 0 ) {
 				// Error occurred during receiving
 				ESP_LOGE(TAG, "recv failed: esp_transport_read() returned %d, errno %d", len, errno);
@@ -70,7 +70,7 @@ void tcp_transport_client_task(void *pvParameters)
 				//ESP_LOGI(TAG, "received %d bytes", len);
 				pp_decode( rx_buffer, len );
 			}
-			vTaskDelay( 10 / portTICK_PERIOD_MS );
+			//vTaskDelay( 10 / portTICK_PERIOD_MS );
 		}
 
 		ESP_LOGE(TAG, "Shutting down transport and restarting...");

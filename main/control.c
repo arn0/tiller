@@ -49,6 +49,7 @@ struct struct_control_settings { unsigned int low_current;
 
 uint16_t flags = 0;
 struct struct_control_settings control_settings;
+uint8_t timeout;
 uint8_t out_sync_b = 0, out_sync_pos = 0;
 uint8_t low_current = 1;
 
@@ -86,6 +87,17 @@ void stop_starboard()
 {
     if(lastpos < 1000)
        stop();
+}
+
+void disengage()
+{
+    stop();
+    if(flags | ENGAGED) {
+        flags &= ~ENGAGED;
+        timeout = 30; // detach in about 62ms
+    }
+    //clutch_start_time = 0;
+    // clutch
 }
 
 void engage()
@@ -261,7 +273,7 @@ void send_packet()
         ESP_LOGI(TAG, "Send FLAGS_CODE, value %d:", value);
         break;
     case 1: case 4: case 7: case 11: case 14: case 17: case 21: case 24: case 27: case 31: case 34: case 37: case 40:
-        value = 1000;
+        value = 100;       // in steps of 10 mA
         packet.p.command = CURRENT_CODE;
         ESP_LOGI(TAG, "Send CURRENT_CODE, value %d:", value);
         break;
@@ -271,17 +283,17 @@ void send_packet()
         ESP_LOGI(TAG, "Send RUDDER_SENSE_CODE, value %d:", value);
         break;
     case 3: case 13: case 23: case 33:
-        value = 1200;
+        value = 1200;       // in steps of 10 mV
         packet.p.command = VOLTAGE_CODE;
         ESP_LOGI(TAG, "Send VOLTAGE_CODE, value %d:", value);
         break;
     case 6:
-        value = 6600;
+        value = 41*100;     // Degrees celcius, in steps of 0.01 degree
         packet.p.command = CONTROLLER_TEMP_CODE;
         ESP_LOGI(TAG, "Send CONTROLLER_TEMP_CODE, value %d:", value);
         break;
     case 9:
-        value = 4200;        // 1200 = 12C
+        value = 42*100;      // 1200 = 12C
         packet.p.command = MOTOR_TEMP_CODE;
         ESP_LOGI(TAG, "Send MOTOR_TEMP_CODE, value %d:", value);
         break;
@@ -310,7 +322,7 @@ void control_loop(void *p) {
             send_packet();
             vTaskDelay( 2 / portTICK_PERIOD_MS );
         } else {
-            vTaskDelay( 20 / portTICK_PERIOD_MS );
+            vTaskDelay( 10 / portTICK_PERIOD_MS );
         }
     }
     vTaskDelete(NULL);

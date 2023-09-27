@@ -85,7 +85,7 @@ void app_main(void)
 			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
 			/* kill control loop task */
 			/* wait and start tcp task again */
-			vTaskDelay( 5000 / portTICK_PERIOD_MS );
+			vTaskDelay( 15000 / portTICK_PERIOD_MS );
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else {
 			ESP_LOGE(TAG, "UNEXPECTED EVENT");
