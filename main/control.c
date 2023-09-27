@@ -238,15 +238,37 @@ void control_loop(void *p) {
     control_settings.low_current = 2000;
     pypi_packet packet;
 
-    send_loop();
+    //send_loop();
 
     while( true ) {
         if( pp_get_rx_packet( &packet ) ) {
             send_loop();
             process_packet( packet );
+            vTaskDelay( 2 / portTICK_PERIOD_MS );
         } else {
             vTaskDelay( 50 / portTICK_PERIOD_MS );
         }
     }
     vTaskDelete(NULL);
 }
+/* Estimate timing based on default serial speed for Arduino servo
+ * 38400 baud = 38400 bit/s
+ * 8 databits + 1 startbit + 1 stopbit = 10 bits
+ * 38400 / 10 = 3840 byte/s
+ * 
+ * uint8_t out_sync_pos = 0; counts continuesly, so 256 byte slots
+ * of wich 43 (codes) * 4 (bytes / code) = 172 are actually used
+ * 
+ * with 3840 bit/s we can do max 3840 / 256 = 15 loop/s
+ * one loop can be minimal 1 /15 = 66,6 ms
+ * 
+ * this loop sends 4 bytes, the original did 1 byte per loop
+ * 
+ * original 43 * 4 = 172 data 256 - 172 = 84 wait
+ * this     43 packets data   256 - 43  = 213 wait
+ * 
+ * with 256 as max for out_sync_pos this does not work
+ * 
+ * original 84 wait = 84 /4 = 21 packets
+ * so this loop should count to 43 + 21 = 64 (which is 256 / 4 and makes sense)
+ */
