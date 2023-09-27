@@ -42,7 +42,7 @@ void pp_set_rx_sync( bool flag ){
 bool pp_get_rx_packet( pypi_packet *packet ) {
 	if( queue_get_rx( packet ) ) {
 		if( crc8( packet->byte, 3 ) == packet->byte[3] ) {
-			ESP_LOGI(TAG, "valid packet from queue: %hx %hx %hx %hx", packet->byte[0], packet->byte[1], packet->byte[2], packet->byte[3] );
+			//ESP_LOGI(TAG, "valid packet from queue: %hx %hx %hx %hx", packet->byte[0], packet->byte[1], packet->byte[2], packet->byte[3] );
 			return( true );
 		}
 		pp_set_rx_sync( false );
@@ -69,7 +69,7 @@ void shift_out( char* buffer, int shift, int length ) {
 }
 
 void pp_decode( char* buffer, int len ) {
-	ESP_LOGI(TAG, "start, len = %d", len);
+	//ESP_LOGI(TAG, "start, len = %d", len);
 	
 	if( len + temp > sizeof(temp_buffer) ){				// test if we have room for the new bytes
 		ESP_LOGI(TAG, "shift, temp = %d", temp);
@@ -98,7 +98,7 @@ void pp_decode( char* buffer, int len ) {
 	}
 	while( p < e ) {												// test for more packets
 		if( crc8( (uint8_t*) p, 3 ) == p[3] ) {
-			ESP_LOGI(TAG, "sync");
+			//ESP_LOGI(TAG, "sync");
 			if ( queue_put_rx( p ) ) {
 				p += 4;
 			} else {
