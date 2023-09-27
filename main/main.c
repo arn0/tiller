@@ -50,10 +50,11 @@ void app_main(void)
 	wifi_init_station();
 
 	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
+	EventBits_t bits;
+	TaskHandle_t xHandle_control_loop;
 
 	queue_init();		// init xQueue
 
-	EventBits_t bits;
 	light_sleep_prepare();
 
 	while( true ) {
@@ -80,10 +81,11 @@ void app_main(void)
 		} else if( bits & TCP_CONNECTED_BIT ){
 			ESP_LOGI(TAG, "TCP_CONNECTED_BIT received");
 			/* next step */
- 			xTaskCreate( control_loop, "control_loop", 4096, NULL, 5, NULL );
+ 			xTaskCreate( control_loop, "control_loop", 4096, NULL, 5, &xHandle_control_loop );
 		} else if( bits & TCP_FAILED_BIT ){
 			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
 			/* kill control loop task */
+			vTaskDelete( xHandle_control_loop );
 			/* wait and start tcp task again */
 			vTaskDelay( 15000 / portTICK_PERIOD_MS );
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
