@@ -186,7 +186,7 @@ void process_packet( pypi_packet packet )
 			ESP_LOGI( TAG, "Received DISENGAGE_CODE, value %d", value );
 //				if(serialin < 12)
 //					serialin+=4; // output at input rate
-//				disengage();
+				disengage();
 			break;
 
 		case MAX_SLEW_CODE:
@@ -278,7 +278,7 @@ bool send_packet()
 			break;
 
 		case 2: case 5: case 8: case 12: case 15: case 18: case 22: case 25: case 28: case 32: case 35: case 38: case 41:
-			value = 1000;
+			value = 0x7FFF;							// ~ 65535/2
 			packet.p.command = RUDDER_SENSE_CODE;
 			ESP_LOGI( TAG, "Send RUDDER_SENSE_CODE, value %d:", value );
 			break;
@@ -323,7 +323,14 @@ void send_packet_test() {
 }
 
 void control_loop( void *p ) {
-	control_settings.low_current = 2000;
+	flags = 0;
+	control_settings.max_current = 2000;				// 20 Amps
+	control_settings.max_controller_temp = 7000;		// 70C
+	control_settings.max_motor_temp = 7000;			// 70C
+	control_settings.max_slew_speed = 50;
+	control_settings.max_slew_slow = 75;				// 200 is full power in 1/10th of a second
+	control_settings.rudder_min = 0;
+	control_settings.rudder_max = 65535;
 	control_settings.clutch_pwm = 192;
 	control_settings.use_brake = 0;
 	control_settings.brake_on = 0;
@@ -336,7 +343,7 @@ void control_loop( void *p ) {
 			vTaskDelay( 2 / portTICK_PERIOD_MS );
 		} else {
 			send_packet();
-			vTaskDelay( 50 / portTICK_PERIOD_MS );
+			vTaskDelay( 150 / portTICK_PERIOD_MS );
 		}
 	}
 	vTaskDelete(NULL);
