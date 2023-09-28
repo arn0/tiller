@@ -51,7 +51,7 @@ void app_main(void)
 
 	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
 	EventBits_t bits;
-	TaskHandle_t xHandle_control_loop;
+	TaskHandle_t xHandle_control_loop = NULL;
 
 	queue_init();		// init xQueue
 
@@ -85,7 +85,10 @@ void app_main(void)
 		} else if( bits & TCP_FAILED_BIT ){
 			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
 			/* kill control loop task */
-			vTaskDelete( xHandle_control_loop );
+			if( xHandle_control_loop ) {
+				vTaskDelete( xHandle_control_loop );
+				xHandle_control_loop = NULL;
+			}
 			/* wait and start tcp task again */
 			vTaskDelay( 15000 / portTICK_PERIOD_MS );
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
