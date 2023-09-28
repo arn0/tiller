@@ -41,7 +41,7 @@ void tcp_transport_client_task(void *pvParameters)
 		}
 		int err = esp_transport_connect(transport, SECRET_ADDR, SECRET_PORT, -1);
 		if (err != 0) {
-			ESP_LOGE(TAG, "Client unable to connect: errno %d", errno);
+//			ESP_LOGE(TAG, "Client unable to connect: errno %d", errno);
 		break;
 		}
 		ESP_LOGI(TAG, "Successfully connected");
