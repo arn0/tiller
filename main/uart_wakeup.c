@@ -28,7 +28,7 @@
 #define EXAMPLE_READ_BUF_SIZE   1024
 #define EXAMPLE_UART_BUF_SIZE   (EXAMPLE_READ_BUF_SIZE * 2)
 
-static const char *TAG = "uart_wakeup";
+static const char *TAG = "> uart_wakeup";
 
 static QueueHandle_t uart_evt_que = NULL;
 

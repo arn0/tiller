@@ -22,7 +22,7 @@
 #include "timer_wakeup.h"
 #include "uart_wakeup.h"
 
-static const char *TAG = "light_sleep";
+static const char *TAG = ">light_sleep";
 
 void light_sleep_task(void *args)
 {

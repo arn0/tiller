@@ -18,9 +18,11 @@
 #include "wifi_station.h"
 #include "tcp_transport_client.h"
 #include "light_sleep.h"
+#include "control.h"
+#include "pp_queue.h"
 #include "../../secret.h"
 
-static const char *TAG = "main";
+static const char *TAG = ">main";
 
 
 void app_main(void)
@@ -41,16 +43,18 @@ void app_main(void)
 	}
 	ESP_ERROR_CHECK(ret);
 
-	setenv( "TZ", "CET-1CEST,M3.5.0/2,M10.5.0/3", 100 );
+	setenv( "TZ", "CET-1CEST,M3.5.0/2,M10.5.0/3", 100 );		// set timezone and daylight saving time
 	tzset();
 
 	ESP_LOGI(TAG, "Start wifi_init_station()");
 	wifi_init_station();
 
 	esp_sntp_config_t sntp_config = ESP_NETIF_SNTP_DEFAULT_CONFIG( SECRET_ADDR );
-
-
 	EventBits_t bits;
+	TaskHandle_t xHandle_control_loop;
+
+	queue_init();		// init xQueue
+
 	light_sleep_prepare();
 
 	while( true ) {
@@ -61,9 +65,7 @@ void app_main(void)
 
 		if ( bits & WIFI_CONNECTED_BIT ) {
 			ESP_LOGI( TAG, "connected to ap SSID:%s", SECRET_SSID );
-     		
-			/* Use sntp server to set system time */
-			esp_netif_sntp_init( &sntp_config );
+			esp_netif_sntp_init( &sntp_config );						/* Use sntp server to set system time */
      		if ( esp_netif_sntp_sync_wait( pdMS_TO_TICKS( 10000 ) ) != ESP_OK ) {
          	ESP_LOGE( TAG, "Failed to update system time within 10s timeout" );
  			}
@@ -74,13 +76,18 @@ void app_main(void)
 			ESP_ERROR_CHECK( esp_wifi_stop() );
 			xTaskCreate(light_sleep_task, "light_sleep_task", 4096, s_wifi_event_group, 6, NULL);
 		} else if ( bits & SLEEP_WAKEUP_BIT ) {
-				ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
-				ESP_ERROR_CHECK( esp_wifi_start ());
+			ESP_LOGI(TAG, "SLEEP_WAKEUP_BIT received");
+			ESP_ERROR_CHECK( esp_wifi_start ());
 		} else if( bits & TCP_CONNECTED_BIT ){
+			ESP_LOGI(TAG, "TCP_CONNECTED_BIT received");
 			/* next step */
+ 			xTaskCreate( control_loop, "control_loop", 4096, NULL, 5, &xHandle_control_loop );
 		} else if( bits & TCP_FAILED_BIT ){
+			ESP_LOGI(TAG, "TCP_FAILED_BIT received");
+			/* kill control loop task */
+			vTaskDelete( xHandle_control_loop );
 			/* wait and start tcp task again */
-			vTaskDelay( 5000 / portTICK_PERIOD_MS );
+			vTaskDelay( 15000 / portTICK_PERIOD_MS );
  			xTaskCreate( tcp_transport_client_task, "tcp_transport_client", 4096, NULL, 5, NULL );
 		} else {
 			ESP_LOGE(TAG, "UNEXPECTED EVENT");

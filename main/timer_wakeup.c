@@ -13,7 +13,7 @@
 #define SEC_TO_USEC ( 1000 * 1000 )
 
 
-static const char *TAG = "timer_wakeup";
+static const char *TAG = "> timer_wakeup";
 
 esp_err_t register_timer_wakeup(void)
 {

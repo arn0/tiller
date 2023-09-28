@@ -24,10 +24,10 @@
 #include "../../secret.h"
 
 #define WIFI_MAXIMUM_RETRY 4
-#define WIFI_WAIT_TIME 1000
+#define WIFI_WAIT_TIME 2000
 
 
-static const char *TAG = "wifi station";
+static const char *TAG = "> wifi station";
 
 /* FreeRTOS event group to signal when we are connected*/
 EventGroupHandle_t s_wifi_event_group;
